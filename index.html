@@ -534,6 +534,19 @@ function renderOneReport(container,p,dt,idx,isConsol){
       <div class="kc"><div class="kl">Net Position</div><div class="kv" style="color:${nc}">${fF(p.netRev)}</div><div class="kb">${nl}</div></div>
       <div class="kc"><div class="kl">Personnel Cost</div><div class="kv" style="color:var(--ac)">${pp.toFixed(0)}%</div><div class="kb">of total spending</div></div>
     </div>
+          <div class="ks" style="margin-top:16px">
+                  <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:var(--or)">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
+                          <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:var(--bl)">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
+                                  <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${((p.netRev/p.revenue)*100).toFixed(1)}%</div><div class="kb">return on revenue</div></div>
+                                          <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${fF(p.expenditures/(p.revenue+(p.otherRev||0)))}</div><div class="kb">per dollar earned</div></div>
+                                                </div>
+
+                                                      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
+                                                              <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
+                                                                      <div style="font-size:13px;line-height:1.6;color:var(--sc)">
+                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${filtered.length} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+                                                                                        </div>
+                                                                                              </div>
     <div class="cr">
       <div class="cp"><div class="ct">Spending Breakdown</div><canvas id="pie${idx}" height="130"></canvas><div class="li" id="leg${idx}"></div></div>
       <div class="cp"><div class="ct">Revenue vs Spending</div><canvas id="bar${idx}" height="130"></canvas></div>
