@@ -137,6 +137,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .rh{padding:14px 18px}.rh h2{font-size:17px}.rh .ey{font-size:8px}.rh .mgr{font-size:9px}.rh .ri .lb{font-size:8px}.rh .ri .vl{font-size:9px}
   .ks{}.kc{padding:8px 10px}.kc .kl{font-size:7px}.kc .kv{font-size:13px}.kc .kb{font-size:7px}
   .cr{}.cp{padding:8px 12px}.cp .ct{font-size:9px;margin-bottom:4px}
+    .cr{grid-template-columns:1.2fr 1fr}
   .cp canvas{max-height:110px!important}
   .li .lr{font-size:8px;margin-bottom:0}
   .cd2{padding:8px 14px}.cd2 .ct2{font-size:9px;margin-bottom:3px}
@@ -548,9 +549,8 @@ function renderOneReport(container,p,dt,idx,isConsol){
                                                                                         </div>
                                                                                               </div>
     <div class="cr">
-      <div class="cp"><div class="ct">Spending Breakdown</div><canvas id="pie${idx}" height="130"></canvas><div class="li" id="leg${idx}"></div></div>
-      <div class="cp"><div class="ct">Revenue vs Spending</div><canvas id="bar${idx}" height="130"></canvas></div>
-    </div>
+        <div class="cp"><div class="ct">Revenue vs Spending</div><canvas id="bar${idx}" height="130"></canvas></div>
+        <div class="cp"><div class="ct">Spending Breakdown</div><canvas id="pie${idx}" height="130"></canvas><div class="li" id="leg${idx}"></div></div>    </div>
     <div class="cd2"><div class="ct2">Expenditure Categories</div><div class="cg" id="cg${idx}"></div></div>
     <div class="rf"><div>CBDIO · ${isConsol?"Consolidated":"Project"} Financial Summary · Data through ${dtL}</div><div>Prepared by José Luis Elizalde · Director Financiero</div></div>`;
   container.appendChild(card);
