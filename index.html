@@ -467,11 +467,6 @@ function applyFilters(){
   const dt=document.getElementById("dtInput").value;
   const co=document.getElementById("repC");co.innerHTML="";
 
-  if(filtered.length===0){
-    co.innerHTML='<div class="rk" style="padding:22px;text-align:center;color:var(--i3)">No reports match the selected filters.</div>';
-    return;
-  }
-
   // Consolidated report first if checked
   if(consol&&filtered.length>1){
     const combined=buildConsolidated(filtered);
@@ -503,7 +498,7 @@ function buildConsolidated(prjs){
   return{
     col:"consol",code:"ALL",name:"Consolidated Summary ("+prjs.length+" projects)",
     dateRange:"Multiple",revenue:rev,expenditures:exp,netOp,otherRev:oRev,netRev:netR,
-    categories:cats,active:true,_subtitle:subtitle,_codes:names.join(", "),_projectCount:prjs.length
+    categories:cats,active:true,_subtitle:subtitle,_codes:names.join(", ")
   };
 }
 
@@ -516,9 +511,6 @@ function renderOneReport(container,p,dt,idx,isConsol){
   const nl=p.netRev>0?"Surplus":p.netRev<0?"Deficit":"Balanced";
   const pd=Object.entries(p.categories).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const dtL=fDN(dt);
-  const totalRevenue=p.revenue+(p.otherRev||0);
-  const roiPct=p.revenue?((p.netRev/p.revenue)*100).toFixed(1):"0.0";
-  const costEfficiency=totalRevenue?fF(p.expenditures/totalRevenue):"$0.00";
 
   const headerBg=isConsol?"#1e3a5f":"var(--ink)";
   const eyeLabel=isConsol?"CONSOLIDATED FINANCIAL SUMMARY":`PROJECT ${p.code} · FINANCIAL SUMMARY`;
@@ -539,22 +531,22 @@ function renderOneReport(container,p,dt,idx,isConsol){
       </div>
     </div>
     <div class="ks">
-      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF(totalRevenue)}</div><div class="kb">Earned + Restricted</div></div>
+      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF(p.revenue+(p.otherRev||0))}</div><div class="kb">Earned + Restricted</div></div>
       <div class="kc"><div class="kl">Total Spent</div><div class="kv" style="color:var(--rd)">${fF(p.expenditures)}</div><div class="kb">${br.toFixed(0)}% of earned revenue</div></div>
       <div class="kc"><div class="kl">Net Position</div><div class="kv" style="color:${nc}">${fF(p.netRev)}</div><div class="kb">${nl}</div></div>
       <div class="kc"><div class="kl">Personnel Cost</div><div class="kv" style="color:var(--ac)">${pp.toFixed(0)}%</div><div class="kb">of total spending</div></div>
     </div>
           <div class="ks" style="margin-top:16px">
-                  <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:#ea580c">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
-                          <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:#2563eb">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
-                                  <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${roiPct}%</div><div class="kb">return on revenue</div></div>
-                                          <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${costEfficiency}</div><div class="kb">per dollar earned</div></div>
+                  <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:var(--or)">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
+                          <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:var(--bl)">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
+                                  <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${((p.netRev/p.revenue)*100).toFixed(1)}%</div><div class="kb">return on revenue</div></div>
+                                          <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${fF(p.expenditures/(p.revenue+(p.otherRev||0)))}</div><div class="kb">per dollar earned</div></div>
                                                 </div>
 
-                                                      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--ln)">
-                                                              <div style="font-weight:600;margin-bottom:8px;color:var(--ink);font-size:14px">Quick Analysis</div>
-                                                                      <div style="font-size:13px;line-height:1.6;color:var(--i2)">
-                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${p._projectCount||0} active projects with combined revenue of ${fF(totalRevenue)}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+                                                      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
+                                                              <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
+                                                                      <div style="font-size:13px;line-height:1.6;color:var(--sc)">
+                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${filtered.length} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
                                                                                         </div>
                                                                                               </div>
     <div class="cr">
@@ -597,9 +589,9 @@ function renderOneReport(container,p,dt,idx,isConsol){
           if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
       try{
           let filtered=reportProjects.slice();
-          if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
-                if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
-      if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
+          if(fm!=='All')filtered=filtered.filter(p=>pMgr[p.col]===fm);
+                if(fo!=='All')filtered=filtered.filter(p=>pRgn[p.col]===fo);
+      if(fp!=='All')filtered=filtered.filter(p=>String(p.col)===fp);
 
           const wb=XLSX.utils.book_new();
 
@@ -629,9 +621,6 @@ function renderOneReport(container,p,dt,idx,isConsol){
       const data=[];
           const br=p.revenue===0?0:(p.expenditures/p.revenue)*100;
           const pp=p.expenditures===0?0:(p.categories.Personnel/p.expenditures)*100;
-          const totalRevenue=p.revenue+(p.otherRev||0);
-          const roiPct=p.revenue?((p.netRev/p.revenue)*100).toFixed(1):"0.0";
-          const costEfficiency=totalRevenue?p.expenditures/totalRevenue:0;
 
           // Header
           data.push([p.name]);
@@ -639,14 +628,14 @@ function renderOneReport(container,p,dt,idx,isConsol){
 
           // KPIs
           data.push(['KPI','Value','Details']);
-          data.push(['Total Revenue',totalRevenue,'Earned + Restricted']);
+          data.push(['Total Revenue',p.revenue+(p.otherRev||0),'Earned + Restricted']);
           data.push(['Total Spent',p.expenditures,`${br.toFixed(0)}% of earned revenue`]);
           data.push(['Net Position',p.netRev,p.netRev>=0?'Surplus':'Deficit']);
           data.push(['Personnel Cost',`${pp.toFixed(0)}%`,'of total spending']);
           data.push(['Burn Rate',p.expenditures/12,'monthly average']);
           data.push(['Budget Utilization',`${br.toFixed(0)}%`,'of revenue spent']);
-          data.push(['ROI',`${roiPct}%`,'return on revenue']);
-          data.push(['Cost Efficiency',costEfficiency,'per dollar earned']);
+          data.push(['ROI',`${((p.netRev/p.revenue)*100).toFixed(1)}%`,'return on revenue']);
+          data.push(['Cost Efficiency',p.expenditures/(p.revenue+(p.otherRev||0)),'per dollar earned']);
           data.push([]);
 
           // Categories
