@@ -127,6 +127,19 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 @media print{
   body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11px}
   .hbar,.fbar,.noprint{display:none!important}
+  
+/* ── Dropdown Filter Styles ── */
+.filter-dropdown{position:relative;display:inline-block}
+.filter-btn{padding:6px 12px;border:1px solid var(--ln);border-radius:6px;background:var(--s);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;min-width:140px;justify-content:space-between}
+.filter-btn:hover{background:var(--l2)}
+.filter-btn .count{background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600}
+.filter-menu{position:absolute;top:100%;left:0;margin-top:4px;background:var(--s);border:1px solid var(--ln);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:300px;overflow-y:auto;min-width:220px;z-index:100;display:none}
+.filter-menu.show{display:block}
+.filter-menu-item{padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--l2)}
+.filter-menu-item:last-child{border-bottom:none}
+.filter-menu-item:hover{background:var(--l2)}
+.filter-menu-item input[type="checkbox"]{cursor:pointer}
+.filter-menu-item.all{background:#f0f9ff;font-weight:600;position:sticky;top:0;z-index:1}
   .rc{padding:0;max-width:100%}
   .rk{
     box-shadow:none;border:1px solid #ddd;border-radius:0;margin:0;
@@ -247,17 +260,21 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
     <label>Filter by:</label>
           <button class="bd" onclick="exportToExcel()" style="margin-left:8px">📊 Export to Excel</button>
     <div>
-      <label style="font-size:10px;color:var(--mu)">Manager</label>
-      <select id="fMgr" onchange="applyFilters()"><option value="">All</option></select><div id="fMgrList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-    </div>
-    <div>
-      <label style="font-size:10px;color:var(--mu)">Office / Region</label>
-      <select id="fOfc" onchange="applyFilters()"><option value="">All</option></select><div id="fOfcList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-    </div>
-    <div>
-      <label style="font-size:10px;color:var(--mu)">Project</label>
-      <select id="fPrj" onchange="applyFilters()"><option value="">All</option></select><div id="fPrjList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-    </div>
+            <!-- Manager Filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" id="mgrBtn" onclick="toggleFilter('mgrMenu')">Manager <span class="count" id="mgrCount">All</span> &#9662;</button>
+                <div class="filter-menu" id="mgrMenu"></div>
+            </div>
+            <!-- Office Filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" id="ofcBtn" onclick="toggleFilter('ofcMenu')">Office / Region <span class="count" id="ofcCount">All</span> &#9662;</button>
+                <div class="filter-menu" id="ofcMenu"></div>
+            </div>
+            <!-- Project Filter -->
+            <div class="filter-dropdown">
+                <button class="filter-btn" id="prjBtn" onclick="toggleFilter('prjMenu')">Project <span class="count" id="prjCount">All</span> &#9662;</button>
+                <div class="filter-menu" id="prjMenu"></div>
+            </div>    </div>
     <div class="sep"></div>
     <label class="check-label"><input type="checkbox" id="chkConsol" onchange="applyFilters()"> Include Consolidated Report</label>
   </div>
@@ -439,21 +456,57 @@ function doGenerate(){
 }
 
 function buildFilterDropdowns(){
-  // Managers
   const mSet=new Set();const oSet=new Set();
   reportProjects.forEach(p=>{if(pMgr[p.col])mSet.add(pMgr[p.col]);if(pRgn[p.col])oSet.add(pRgn[p.col])});
-  const fml=document.getElementById("fMgrList");
-  fml.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fMgrAll" checked onchange="toggleAllFilters(\'fMgrChk\',this.checked)">All Managers</label>'+[...mSet].sort().map(m=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fMgrChk" value="${m}" checked onchange="applyFilters()">${m}</label>`).join('');
-  const fol=document.getElementById("fOfcList");
-  fol.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fOfcAll" checked onchange="toggleAllFilters(\'fOfcChk\',this.checked)">All Offices</label>'+[...oSet].sort().map(o=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fOfcChk" value="${o}" checked onchange="applyFilters()">${o}</label>`).join('');
-  const fpl=document.getElementById("fPrjList");
-  fpl.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fPrjAll" checked onchange="toggleAllFilters(\'fPrjChk\',this.checked)">All Projects</label>'+reportProjects.map(p=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fPrjChk" value="${p.col}" checked onchange="applyFilters()">${p.code} - ${p.name}</label>`).join('');
+  
+  // Build Manager menu
+  const mgrMenu=document.getElementById('mgrMenu');
+  mgrMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fMgrAll" checked onchange="toggleAllInFilter(\'fMgrChk\',this.checked)">All Managers</label></div>'+[...mSet].sort().map(m=>`<div class="filter-menu-item"><label><input type="checkbox" class="fMgrChk" value="${m}" checked onchange="updateFilterCounts();applyFilters()">${m}</label></div>`).join('');
+  
+  // Build Office menu
+  const ofcMenu=document.getElementById('ofcMenu');
+  ofcMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fOfcAll" checked onchange="toggleAllInFilter(\'fOfcChk\',this.checked)">All Offices</label></div>'+[...oSet].sort().map(o=>`<div class="filter-menu-item"><label><input type="checkbox" class="fOfcChk" value="${o}" checked onchange="updateFilterCounts();applyFilters()">${o}</label></div>`).join('');
+  
+  // Build Project menu
+  const prjMenu=document.getElementById('prjMenu');
+  prjMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fPrjAll" checked onchange="toggleAllInFilter(\'fPrjChk\',this.checked)">All Projects</label></div>'+reportProjects.map(p=>`<div class="filter-menu-item"><label><input type="checkbox" class="fPrjChk" value="${p.col}" checked onchange="updateFilterCounts();applyFilters()">${p.code} - ${p.name}</label></div>`).join('');
+  
+  updateFilterCounts();
 }
 
-function toggleAllFilters(className, checked){
+function toggleFilter(menuId){
+  // Close all other menus
+  document.querySelectorAll('.filter-menu').forEach(m=>m.classList.remove('show'));
+  // Toggle this menu
+  document.getElementById(menuId).classList.toggle('show');
+}
+
+function toggleAllInFilter(className, checked){
   document.querySelectorAll('.'+className).forEach(chk=>chk.checked=checked);
+  updateFilterCounts();
   applyFilters();
 }
+
+function updateFilterCounts(){
+  const mgrChecked=document.querySelectorAll('.fMgrChk:checked').length;
+  const mgrTotal=document.querySelectorAll('.fMgrChk').length;
+  document.getElementById('mgrCount').textContent=mgrChecked===mgrTotal?'All':mgrChecked;
+  
+  const ofcChecked=document.querySelectorAll('.fOfcChk:checked').length;
+  const ofcTotal=document.querySelectorAll('.fOfcChk').length;
+  document.getElementById('ofcCount').textContent=ofcChecked===ofcTotal?'All':ofcChecked;
+  
+  const prjChecked=document.querySelectorAll('.fPrjChk:checked').length;
+  const prjTotal=document.querySelectorAll('.fPrjChk').length;
+  document.getElementById('prjCount').textContent=prjChecked===prjTotal?'All':prjChecked;
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.filter-dropdown')){
+    document.querySelectorAll('.filter-menu').forEach(m=>m.classList.remove('show'));
+  }
+});
 function applyFilters(){
   destroyCharts();
   const fMgrs=Array.from(document.querySelectorAll('.fMgrChk:checked')).map(c=>c.value);
