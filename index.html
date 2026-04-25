@@ -145,13 +145,14 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .cx .cbar{width:32px;height:3px}
   .rf{padding:5px 18px;font-size:7px}
 }
+  
 @media(max-width:768px){.ks{grid-template-columns:repeat(2,1fr)}.cr{grid-template-columns:1fr}.cp:first-child{border-right:none;border-bottom:1px solid var(--l2)}.cg{grid-template-columns:1fr}.pg{grid-template-columns:1fr}.uw h1{font-size:34px}.ma{flex-direction:column}}
-</style>
+@media(max-width:768px)
 </head>
 <body>
 
 <!-- ══════ UPLOAD ══════ -->
-<div id="screen-upload" class="screen active">
+<div id="screen-upload" class="screen active noprint">
   <div class="uw">
     <div class="ey">CBDIO Financial Intelligence</div>
     <h1 class="serif">Project Financial<br><em>Reporter</em></h1>
@@ -171,7 +172,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 </div>
 
 <!-- ══════ SELECT ══════ -->
-<div id="screen-select" class="screen">
+<div id="screen-select" class="screen noprint">
   <div class="hbar">
     <div class="left">
       <button class="bg bs" onclick="goUpload()">← New File</button><div class="sep"></div>
