@@ -527,7 +527,7 @@ if(fPrjs.length>0)filtered=filtered.filter(p=>fPrjs.includes(p.col));
     const combined=buildConsolidated(filtered);
     renderOneReport(co,combined,dt,0,true);
   }
-
+    if(consol&&filtered.length>0){
   // Individual reports
   filtered.forEach((p,i)=>{
     renderOneReport(co,p,dt,i+(consol?1:0),false);
