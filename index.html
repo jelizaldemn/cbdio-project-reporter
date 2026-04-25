@@ -276,7 +276,13 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
                 <div class="filter-menu" id="prjMenu"></div>
             </div>    </div>
     <div class="sep"></div>
-    <label class="check-label"><input type="checkbox" id="chkConsol" onchange="applyFilters()"> Include Consolidated Report</label>
+    <div class="filter-dropdown">
+      <button class="filter-btn" id="consolBtn" onclick="toggleFilter('consolMenu')">Report Type <span class="count" id="consolCount">Individual</span> ▾</button>
+      <div class="filter-menu" id="consolMenu">
+        <div class="filter-menu-item all"><label><input type="radio" name="consolType" value="individual" checked onchange="updateConsolCount();applyFilters()"> Individual Reports</label></div>
+        <div class="filter-menu-item"><label><input type="radio" name="consolType" value="both" onchange="updateConsolCount();applyFilters()"> Individual + Consolidated</label></div>
+      </div>
+    </div>
   </div>
   <div class="rc" id="repC"></div>
 </div>
@@ -501,6 +507,12 @@ function updateFilterCounts(){
   const prjTotal=document.querySelectorAll('.fPrjChk').length;
   document.getElementById('prjCount').textContent=prjChecked===prjTotal?'All':prjChecked;
 }
+function updateConsolCount(){
+  const sel=document.querySelector('input[name="consolType"]:checked');
+  const count=document.getElementById('consolCount');
+  if(count) count.textContent=sel&&sel.value==='both'?'Indiv + Consol':'Individual';
+}
+
 
 // Close dropdowns when clicking outside
 document.addEventListener('click',function(e){
@@ -512,7 +524,9 @@ function applyFilters(){
   destroyCharts();
   const fMgrs=Array.from(document.querySelectorAll('.fMgrChk:checked')).map(c=>c.value);
 const fOfcs=Array.from(document.querySelectorAll('.fOfcChk:checked')).map(c=>c.value);
-const fPrjs=Array.from(document.querySelectorAll('.fPrjChk:checked')).map(c=>Number(c.value));const consol=document.getElementById("chkConsol").checked;
+const fPrjs=Array.from(document.querySelectorAll('.fPrjChk:checked')).map(c=>Number(c.value));
+  const consolSel=document.querySelector('input[name="consolType"]:checked');
+  const consol=consolSel?consolSel.value==='both':false;
 
   let filtered=reportProjects.slice();
 if(fMgrs.length>0)filtered=filtered.filter(p=>fMgrs.includes(pMgr[p.col]));
@@ -528,12 +542,10 @@ if(fPrjs.length>0)filtered=filtered.filter(p=>fPrjs.includes(p.col));
     const combined=buildConsolidated(filtered);
     renderOneReport(co,combined,dt,0,true);
   }
-    if(consol&&filtered.length>0){
   // Individual reports
   filtered.forEach((p,i)=>{
     renderOneReport(co,p,dt,i+(consol?1:0),false);
   });
-}
 }
 
 function buildConsolidated(prjs){
@@ -680,7 +692,8 @@ const dt=document.getElementById("dtInput").value;
 const wb=XLSX.utils.book_new();
 const indexData=[['CBDIO Financial Intelligence - Project Financial Reporter'],['Data Through: '+fDN(dt)],[],['Index of Reports']];let row=4;
 const filtered=reportProjects.slice();
-const consol=document.getElementById("chkConsol").checked;
+const consolSelExp=document.querySelector('input[name="consolType"]:checked');
+const consol=consolSelExp?consolSelExp.value==='both':false;
 if(consol){indexData.push(['Consolidated Summary','Click to view']);row++;}
 filtered.forEach(p=>{indexData.push([p.code+' - '+p.name,'Click to view']);row++;});
 const wsIndex=XLSX.utils.aoa_to_sheet(indexData);
