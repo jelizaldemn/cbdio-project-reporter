@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f5f4f0;--s:#fff;--ink:#1e293b;--i2:#475569;--i3:#64748b;--mu:#94a3b8;--ln:#e2e8f0;--l2:#f1f5f9;--ac:#2563eb;--gn:#16a34a;--rd:#ef4444;--r2:#dc2626}
+:root{--bg:#f5f4f0;--s:#fff;--ink:#1e293b;--i2:#475569;--i3:#64748b;--mu:#94a3b8;--ln:#e2e8f0;--l2:#f1f5f9;--ac:#2563eb;--gn:#16a34a;--rd:#ef4444;--r2:#dc2626;--or:#ea580c;--bl:#2563eb;--br:#e2e8f0;--fg:#1e293b;--sc:#475569}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans','Helvetica Neue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
 .serif{font-family:'Instrument Serif',Georgia,serif}
@@ -131,13 +131,13 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .rk{
     box-shadow:none;border:1px solid #ddd;border-radius:0;margin:0;
     page-break-after:always;page-break-inside:avoid;
-    max-height:100vh;overflow:hidden;
+    max-height:none;overflow:visible;
   }
   .rk:last-child{page-break-after:auto}
   .rh{padding:14px 18px}.rh h2{font-size:17px}.rh .ey{font-size:8px}.rh .mgr{font-size:9px}.rh .ri .lb{font-size:8px}.rh .ri .vl{font-size:9px}
   .ks{}.kc{padding:8px 10px}.kc .kl{font-size:7px}.kc .kv{font-size:13px}.kc .kb{font-size:7px}
   .cr{}.cp{padding:8px 12px}.cp .ct{font-size:9px;margin-bottom:4px}
-    .cr{grid-template-columns:1.2fr 1fr!important}
+    .cr{grid-template-columns:1fr 1fr!important}
   .cp canvas{max-height:110px!important}
   .li .lr{font-size:8px;margin-bottom:0}
   .cd2{padding:8px 14px}.cd2 .ct2{font-size:9px;margin-bottom:3px}
@@ -589,9 +589,9 @@ function renderOneReport(container,p,dt,idx,isConsol){
           if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
       try{
           let filtered=reportProjects.slice();
-          if(fm!=='All')filtered=filtered.filter(p=>pMgr[p.col]===fm);
-                if(fo!=='All')filtered=filtered.filter(p=>pRgn[p.col]===fo);
-      if(fp!=='All')filtered=filtered.filter(p=>String(p.col)===fp);
+          if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
+                            if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
+              if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
 
           const wb=XLSX.utils.book_new();
 
