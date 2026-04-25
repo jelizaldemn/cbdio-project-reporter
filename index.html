@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f5f4f0;--s:#fff;--ink:#1e293b;--i2:#475569;--i3:#64748b;--mu:#94a3b8;--ln:#e2e8f0;--l2:#f1f5f9;--ac:#2563eb;--gn:#16a34a;--rd:#ef4444;--r2:#dc2626;--or:#ea580c;--bl:#2563eb;--br:#e2e8f0;--fg:#1e293b;--sc:#475569}
+:root{--bg:#f5f4f0;--s:#fff;--ink:#1e293b;--i2:#475569;--i3:#64748b;--mu:#94a3b8;--ln:#e2e8f0;--l2:#f1f5f9;--ac:#2563eb;--gn:#16a34a;--rd:#ef4444;--r2:#dc2626}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans','Helvetica Neue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
 .serif{font-family:'Instrument Serif',Georgia,serif}
@@ -83,7 +83,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 /* ── Report filters bar ── */
 .fbar{background:var(--s);border-bottom:1px solid var(--ln);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .fbar label{font-size:11px;font-weight:600;color:var(--i3);white-space:nowrap}
-.fbar select{padding:5px 8px;border:1px solid var(--ln);border-radius:5px;font-size:12px;background:var(--s);min-width:130px;max-width:200px;max-height:80px}
+.fbar select{padding:5px 8px;border:1px solid var(--ln);border-radius:5px;font-size:12px;background:var(--s);max-width:220px}
 .fbar .check-label{font-size:11px;display:flex;align-items:center;gap:4px;color:var(--i2);cursor:pointer}
 .fbar .check-label input{cursor:pointer}
 
@@ -131,14 +131,13 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .rk{
     box-shadow:none;border:1px solid #ddd;border-radius:0;margin:0;
     page-break-after:always;page-break-inside:avoid;
-    max-height:none;overflow:visible;
+    max-height:100vh;overflow:hidden;
   }
-  </style>
   .rk:last-child{page-break-after:auto}
   .rh{padding:14px 18px}.rh h2{font-size:17px}.rh .ey{font-size:8px}.rh .mgr{font-size:9px}.rh .ri .lb{font-size:8px}.rh .ri .vl{font-size:9px}
   .ks{}.kc{padding:8px 10px}.kc .kl{font-size:7px}.kc .kv{font-size:13px}.kc .kb{font-size:7px}
   .cr{}.cp{padding:8px 12px}.cp .ct{font-size:9px;margin-bottom:4px}
-    .cr{grid-template-columns:1fr 1fr!important}
+    .cr{grid-template-columns:1.2fr 1fr!important}
   .cp canvas{max-height:110px!important}
   .li .lr{font-size:8px;margin-bottom:0}
   .cd2{padding:8px 14px}.cd2 .ct2{font-size:9px;margin-bottom:3px}
@@ -146,15 +145,13 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .cx .cbar{width:32px;height:3px}
   .rf{padding:5px 18px;font-size:7px}
 }
-  </style>
-  
 @media(max-width:768px){.ks{grid-template-columns:repeat(2,1fr)}.cr{grid-template-columns:1fr}.cp:first-child{border-right:none;border-bottom:1px solid var(--l2)}.cg{grid-template-columns:1fr}.pg{grid-template-columns:1fr}.uw h1{font-size:34px}.ma{flex-direction:column}}
-@media(max-width:768px)
+</style>
 </head>
 <body>
 
 <!-- ══════ UPLOAD ══════ -->
-<div id="screen-upload" class="screen active noprint">
+<div id="screen-upload" class="screen active">
   <div class="uw">
     <div class="ey">CBDIO Financial Intelligence</div>
     <h1 class="serif">Project Financial<br><em>Reporter</em></h1>
@@ -174,7 +171,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 </div>
 
 <!-- ══════ SELECT ══════ -->
-<div id="screen-select" class="screen noprint">
+<div id="screen-select" class="screen">
   <div class="hbar">
     <div class="left">
       <button class="bg bs" onclick="goUpload()">← New File</button><div class="sep"></div>
@@ -251,15 +248,15 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
           <button class="bd" onclick="exportToExcel()" style="margin-left:8px">📊 Export to Excel</button>
     <div>
       <label style="font-size:10px;color:var(--mu)">Manager</label>
-      <select id="fMgr" multiple onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fMgr" onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div>
       <label style="font-size:10px;color:var(--mu)">Office / Region</label>
-      <select id="fOfc" multiple onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fOfc" onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div>
       <label style="font-size:10px;color:var(--mu)">Project</label>
-      <select id="fPrj" multiple onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fPrj" onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div class="sep"></div>
     <label class="check-label"><input type="checkbox" id="chkConsol" onchange="applyFilters()"> Include Consolidated Report</label>
@@ -455,15 +452,15 @@ function buildFilterDropdowns(){
 
 function applyFilters(){
   destroyCharts();
-  const fm=[...document.getElementById("fMgr").selectedOptions].map(o=>o.value).filter(v=>v);
-  const fo=[...document.getElementById("fOfc").selectedOptions].map(o=>o.value).filter(v=>v);
-  const fp=[...document.getElementById("fPrj").selectedOptions].map(o=>o.value).filter(v=>v);
+  const fm=document.getElementById("fMgr").value;
+  const fo=document.getElementById("fOfc").value;
+  const fp=document.getElementById("fPrj").value;
   const consol=document.getElementById("chkConsol").checked;
 
   let filtered=reportProjects.slice();
-  if(fm.length)filtered=filtered.filter(p=>fm.includes(pMgr[p.col]));
-  if(fo.length)filtered=filtered.filter(p=>fo.includes(pRgn[p.col]));
-  if(fp.length)filtered=filtered.filter(p=>fp.includes(String(p.col)));
+  if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
+  if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
+  if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
 
   document.getElementById("repInfo").textContent=`${filtered.length} project${filtered.length!==1?"s":""}${consol?" + consolidated":""}`;
 
@@ -549,7 +546,7 @@ function renderOneReport(container,p,dt,idx,isConsol){
                                                       <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
                                                               <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
                                                                       <div style="font-size:13px;line-height:1.6;color:var(--sc)">
-                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${p._codes?p._codes.split(',').length:''} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${filtered.length} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
                                                                                         </div>
                                                                                               </div>
     <div class="cr">
@@ -592,9 +589,9 @@ function renderOneReport(container,p,dt,idx,isConsol){
           if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
       try{
           let filtered=reportProjects.slice();
-          if(fm.length)filtered=filtered.filter(p=>fm.includes(pMgr[p.col]));
-                            if(fo.length)filtered=filtered.filter(p=>fo.includes(pRgn[p.col]));
-              if(fp.length)filtered=filtered.filter(p=>fp.includes(String(p.col)));
+          if(fm!=='All')filtered=filtered.filter(p=>pMgr[p.col]===fm);
+                if(fo!=='All')filtered=filtered.filter(p=>pRgn[p.col]===fo);
+      if(fp!=='All')filtered=filtered.filter(p=>String(p.col)===fp);
 
           const wb=XLSX.utils.book_new();
 
