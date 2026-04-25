@@ -141,7 +141,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
   .cp canvas{max-height:110px!important}
   .li .lr{font-size:8px;margin-bottom:0}
   .cd2{padding:8px 14px}.cd2 .ct2{font-size:9px;margin-bottom:3px}
-  .cx{padding:2px 0}.cx .cn{font-size:9px}.cx .ca{font-size:9px}.cx .cdsc{font-size:7px}.cx .cpct{font-size:7px}
+    .cr{grid-template-columns:1fr 1fr!important}
   .cx .cbar{width:32px;height:3px}
   .rf{padding:5px 18px;font-size:7px}
 }
@@ -586,6 +586,8 @@ function renderOneReport(container,p,dt,idx,isConsol){
           const fo=document.getElementById('fOfc').value;
           const fp=document.getElementById('fPrj').value;
           const consol=document.getElementById('chkConsol').checked;
+          if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
+      try{
           let filtered=reportProjects.slice();
           if(fm!=='All')filtered=filtered.filter(p=>pMgr[p.col]===fm);
                 if(fo!=='All')filtered=filtered.filter(p=>pRgn[p.col]===fo);
@@ -612,7 +614,8 @@ function renderOneReport(container,p,dt,idx,isConsol){
           // Download file
           const dt=document.getElementById('dtInput').value||'report';
           XLSX.writeFile(wb,`CBDIO_Financial_Report_${dt}.xlsx`);
-        }
+            }catch(err){alert('Export error: '+err.message);console.error('Excel export error:',err);}
+    }
 
     function buildExcelData(p){
       const data=[];
