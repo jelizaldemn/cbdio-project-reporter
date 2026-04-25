@@ -83,7 +83,7 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 /* ── Report filters bar ── */
 .fbar{background:var(--s);border-bottom:1px solid var(--ln);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .fbar label{font-size:11px;font-weight:600;color:var(--i3);white-space:nowrap}
-.fbar select{padding:5px 8px;border:1px solid var(--ln);border-radius:5px;font-size:12px;background:var(--s);max-width:220px}
+.fbar select{padding:5px 8px;border:1px solid var(--ln);border-radius:5px;font-size:12px;background:var(--s);min-width:130px;max-width:200px;max-height:80px}
 .fbar .check-label{font-size:11px;display:flex;align-items:center;gap:4px;color:var(--i2);cursor:pointer}
 .fbar .check-label input{cursor:pointer}
 
@@ -248,15 +248,15 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
           <button class="bd" onclick="exportToExcel()" style="margin-left:8px">📊 Export to Excel</button>
     <div>
       <label style="font-size:10px;color:var(--mu)">Manager</label>
-      <select id="fMgr" onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fMgr" multiple onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div>
       <label style="font-size:10px;color:var(--mu)">Office / Region</label>
-      <select id="fOfc" onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fOfc" multiple onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div>
       <label style="font-size:10px;color:var(--mu)">Project</label>
-      <select id="fPrj" onchange="applyFilters()"><option value="">All</option></select>
+      <select id="fPrj" multiple onchange="applyFilters()"><option value="">All</option></select>
     </div>
     <div class="sep"></div>
     <label class="check-label"><input type="checkbox" id="chkConsol" onchange="applyFilters()"> Include Consolidated Report</label>
@@ -452,15 +452,15 @@ function buildFilterDropdowns(){
 
 function applyFilters(){
   destroyCharts();
-  const fm=document.getElementById("fMgr").value;
-  const fo=document.getElementById("fOfc").value;
-  const fp=document.getElementById("fPrj").value;
+  const fm=[...document.getElementById("fMgr").selectedOptions].map(o=>o.value).filter(v=>v);
+  const fo=[...document.getElementById("fOfc").selectedOptions].map(o=>o.value).filter(v=>v);
+  const fp=[...document.getElementById("fPrj").selectedOptions].map(o=>o.value).filter(v=>v);
   const consol=document.getElementById("chkConsol").checked;
 
   let filtered=reportProjects.slice();
-  if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
-  if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
-  if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
+  if(fm.length)filtered=filtered.filter(p=>fm.includes(pMgr[p.col]));
+  if(fo.length)filtered=filtered.filter(p=>fo.includes(pRgn[p.col]));
+  if(fp.length)filtered=filtered.filter(p=>fp.includes(String(p.col)));
 
   document.getElementById("repInfo").textContent=`${filtered.length} project${filtered.length!==1?"s":""}${consol?" + consolidated":""}`;
 
@@ -546,7 +546,7 @@ function renderOneReport(container,p,dt,idx,isConsol){
                                                       <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
                                                               <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
                                                                       <div style="font-size:13px;line-height:1.6;color:var(--sc)">
-                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${filtered.length} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${p._codes?p._codes.split(',').length:''} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
                                                                                         </div>
                                                                                               </div>
     <div class="cr">
@@ -589,9 +589,9 @@ function renderOneReport(container,p,dt,idx,isConsol){
           if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
       try{
           let filtered=reportProjects.slice();
-          if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
-                            if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
-              if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
+          if(fm.length)filtered=filtered.filter(p=>fm.includes(pMgr[p.col]));
+                            if(fo.length)filtered=filtered.filter(p=>fo.includes(pRgn[p.col]));
+              if(fp.length)filtered=filtered.filter(p=>fp.includes(String(p.col)));
 
           const wb=XLSX.utils.book_new();
 
