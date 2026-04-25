@@ -442,22 +442,18 @@ function buildFilterDropdowns(){
   // Managers
   const mSet=new Set();const oSet=new Set();
   reportProjects.forEach(p=>{if(pMgr[p.col])mSet.add(pMgr[p.col]);if(pRgn[p.col])oSet.add(pRgn[p.col])});
-  const fm=document.getElementById("fMgr");
-  fm.innerHTML=`<option value="">All Managers</option>`+[...mSet].sort().map(m=>`<option value="${m}">${m}</option>`).join("");
-  const fo=document.getElementById("fOfc");
-  fo.innerHTML=`<option value="">All Offices</option>`+[...oSet].sort().map(o=>`<option value="${o}">${o}</option>`).join("");
-  const fp=document.getElementById("fPrj");
-  fp.innerHTML=`<option value="">All Projects</option>`+reportProjects.map(p=>`<option value="${p.col}">${p.code} — ${p.name}</option>`).join("");
+  const fml=document.getElementById("fMgrList");
+  fml.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fMgrAll" checked onchange="toggleAllFilters(\'fMgrChk\',this.checked)">All Managers</label>'+[...mSet].sort().map(m=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fMgrChk" value="${m}" checked onchange="applyFilters()">${m}</label>`).join('');
+  const fol=document.getElementById("fOfcList");
+  fol.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fOfcAll" checked onchange="toggleAllFilters(\'fOfcChk\',this.checked)">All Offices</label>'+[...oSet].sort().map(o=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fOfcChk" value="${o}" checked onchange="applyFilters()">${o}</label>`).join('');
+  const fpl=document.getElementById("fPrjList");
+  fpl.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fPrjAll" checked onchange="toggleAllFilters(\'fPrjChk\',this.checked)">All Projects</label>'+reportProjects.map(p=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fPrjChk" value="${p.col}" checked onchange="applyFilters()">${p.code} - ${p.name}</label>`).join('');
 }
-// Managers
-const mSet=new Set();const oSet=new Set();
-reportProjects.forEach(p=>{if(pMgr[p.col])mSet.add(pMgr[p.col]);if(pRgn[p.col])oSet.add(pRgn[p.col])});
-const fml=document.getElementById("fMgrList");
-fml.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" value="" checked onchange="applyFilters()">All Managers</label>'+[...mSet].sort().map(m=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fMgrChk" value="${m}" checked onchange="applyFilters()">${m}</label>`).join('');
-const fol=document.getElementById("fOfcList");
-fol.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" value="" checked onchange="applyFilters()">All Offices</label>'+[...oSet].sort().map(o=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fOfcChk" value="${o}" checked onchange="applyFilters()">${o}</label>`).join('');
-const fpl=document.getElementById("fPrjList");
-fpl.innerHTML='<label class="check-label" style="background:#e0f2fe;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" value="" checked onchange="applyFilters()">All Projects</label>'+reportProjects.map(p=>`<label class="check-label" style="background:#f1f5f9;padding:4px 10px;border-radius:5px;font-size:11px"><input type="checkbox" class="fPrjChk" value="${p.col}" checked onchange="applyFilters()">${p.code} - ${p.name}</label>`).join('');
+
+function toggleAllFilters(className, checked){
+  document.querySelectorAll('.'+className).forEach(chk=>chk.checked=checked);
+  applyFilters();
+}
 function applyFilters(){
   destroyCharts();
   const fMgrs=Array.from(document.querySelectorAll('.fMgrChk:checked')).map(c=>c.value);
