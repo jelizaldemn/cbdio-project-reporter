@@ -6,7 +6,7 @@
 <title>CBDIO Project Financial Reporter</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/chss2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f5f4f0;--s:#fff;--ink:#1e293b;--i2:#475569;--i3:#64748b;--mu:#94a3b8;--ln:#e2e8f0;--l2:#f1f5f9;--ac:#2563eb;--gn:#16a34a;--rd:#ef4444;--r2:#dc2626}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -127,19 +127,6 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 @media print{
   body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11px}
   .hbar,.fbar,.noprint{display:none!important}
-  
-/* ── Dropdown Filter Styles ── */
-.filter-dropdown{position:relative;display:inline-block}
-.filter-btn{padding:6px 12px;border:1px solid var(--ln);border-radius:6px;background:var(--s);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;min-width:140px;justify-content:space-between}
-.filter-btn:hover{background:var(--l2)}
-.filter-btn .count{background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600}
-.filter-menu{position:absolute;top:100%;left:0;margin-top:4px;background:var(--s);border:1px solid var(--ln);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:300px;overflow-y:auto;min-width:220px;z-index:100;display:none}
-.filter-menu.show{display:block}
-.filter-menu-item{padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--l2)}
-.filter-menu-item:last-child{border-bottom:none}
-.filter-menu-item:hover{background:var(--l2)}
-.filter-menu-item input[type="checkbox"]{cursor:pointer}
-.filter-menu-item.all{background:#f0f9ff;font-weight:600;position:sticky;top:0;z-index:1}
   .rc{padding:0;max-width:100%}
   .rk{
     box-shadow:none;border:1px solid #ddd;border-radius:0;margin:0;
@@ -260,29 +247,19 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
     <label>Filter by:</label>
           <button class="bd" onclick="exportToExcel()" style="margin-left:8px">📊 Export to Excel</button>
     <div>
-            <!-- Manager Filter -->
-            <div class="filter-dropdown">
-                <button class="filter-btn" id="mgrBtn" onclick="toggleFilter('mgrMenu')">Manager <span class="count" id="mgrCount">All</span> &#9662;</button>
-                <div class="filter-menu" id="mgrMenu"></div>
-            </div>
-            <!-- Office Filter -->
-            <div class="filter-dropdown">
-                <button class="filter-btn" id="ofcBtn" onclick="toggleFilter('ofcMenu')">Office / Region <span class="count" id="ofcCount">All</span> &#9662;</button>
-                <div class="filter-menu" id="ofcMenu"></div>
-            </div>
-            <!-- Project Filter -->
-            <div class="filter-dropdown">
-                <button class="filter-btn" id="prjBtn" onclick="toggleFilter('prjMenu')">Project <span class="count" id="prjCount">All</span> &#9662;</button>
-                <div class="filter-menu" id="prjMenu"></div>
-            </div>    </div>
-    <div class="sep"></div>
-    <div class="filter-dropdown">
-      <button class="filter-btn" id="consolBtn" onclick="toggleFilter('consolMenu')">Report Type <span class="count" id="consolCount">Individual</span> ▾</button>
-      <div class="filter-menu" id="consolMenu">
-        <div class="filter-menu-item all"><label><input type="radio" name="consolType" value="individual" checked onchange="updateConsolCount();applyFilters()"> Individual Reports</label></div>
-        <div class="filter-menu-item"><label><input type="radio" name="consolType" value="both" onchange="updateConsolCount();applyFilters()"> Individual + Consolidated</label></div>
-      </div>
+      <label style="font-size:10px;color:var(--mu)">Manager</label>
+      <select id="fMgr" onchange="applyFilters()"><option value="">All</option></select>
     </div>
+    <div>
+      <label style="font-size:10px;color:var(--mu)">Office / Region</label>
+      <select id="fOfc" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--mu)">Project</label>
+      <select id="fPrj" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <div class="sep"></div>
+    <label class="check-label"><input type="checkbox" id="chkConsol" onchange="applyFilters()"> Include Consolidated Report</label>
   </div>
   <div class="rc" id="repC"></div>
 </div>
@@ -347,7 +324,6 @@ function handleFile(e){
       renderSel();show("select");
     }catch(err){er.textContent="Error: "+err.message;er.style.display="block"}
   };reader.readAsArrayBuffer(file);
-    e.target.value = '';
 }
 
 // ═══════════════════════════════════════
@@ -463,85 +439,45 @@ function doGenerate(){
 }
 
 function buildFilterDropdowns(){
+  // Managers
   const mSet=new Set();const oSet=new Set();
   reportProjects.forEach(p=>{if(pMgr[p.col])mSet.add(pMgr[p.col]);if(pRgn[p.col])oSet.add(pRgn[p.col])});
-  
-  // Build Manager menu
-  const mgrMenu=document.getElementById('mgrMenu');
-  mgrMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fMgrAll" checked onchange="toggleAllInFilter(\'fMgrChk\',this.checked)">All Managers</label></div>'+[...mSet].sort().map(m=>`<div class="filter-menu-item"><label><input type="checkbox" class="fMgrChk" value="${m}" checked onchange="updateFilterCounts();applyFilters()">${m}</label></div>`).join('');
-  
-  // Build Office menu
-  const ofcMenu=document.getElementById('ofcMenu');
-  ofcMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fOfcAll" checked onchange="toggleAllInFilter(\'fOfcChk\',this.checked)">All Offices</label></div>'+[...oSet].sort().map(o=>`<div class="filter-menu-item"><label><input type="checkbox" class="fOfcChk" value="${o}" checked onchange="updateFilterCounts();applyFilters()">${o}</label></div>`).join('');
-  
-  // Build Project menu
-  const prjMenu=document.getElementById('prjMenu');
-  prjMenu.innerHTML='<div class="filter-menu-item all"><label><input type="checkbox" class="fPrjAll" checked onchange="toggleAllInFilter(\'fPrjChk\',this.checked)">All Projects</label></div>'+reportProjects.map(p=>`<div class="filter-menu-item"><label><input type="checkbox" class="fPrjChk" value="${p.col}" checked onchange="updateFilterCounts();applyFilters()">${p.code} - ${p.name}</label></div>`).join('');
-  
-  updateFilterCounts();
+  const fm=document.getElementById("fMgr");
+  fm.innerHTML=`<option value="">All Managers</option>`+[...mSet].sort().map(m=>`<option value="${m}">${m}</option>`).join("");
+  const fo=document.getElementById("fOfc");
+  fo.innerHTML=`<option value="">All Offices</option>`+[...oSet].sort().map(o=>`<option value="${o}">${o}</option>`).join("");
+  const fp=document.getElementById("fPrj");
+  fp.innerHTML=`<option value="">All Projects</option>`+reportProjects.map(p=>`<option value="${p.col}">${p.code} — ${p.name}</option>`).join("");
 }
 
-function toggleFilter(menuId){
-  // Close all other menus
-  document.querySelectorAll('.filter-menu').forEach(m=>m.classList.remove('show'));
-  // Toggle this menu
-  document.getElementById(menuId).classList.toggle('show');
-}
-
-function toggleAllInFilter(className, checked){
-  document.querySelectorAll('.'+className).forEach(chk=>chk.checked=checked);
-  updateFilterCounts();
-  applyFilters();
-}
-
-function updateFilterCounts(){
-  const mgrChecked=document.querySelectorAll('.fMgrChk:checked').length;
-  const mgrTotal=document.querySelectorAll('.fMgrChk').length;
-  document.getElementById('mgrCount').textContent=mgrChecked===mgrTotal?'All':mgrChecked;
-  
-  const ofcChecked=document.querySelectorAll('.fOfcChk:checked').length;
-  const ofcTotal=document.querySelectorAll('.fOfcChk').length;
-  document.getElementById('ofcCount').textContent=ofcChecked===ofcTotal?'All':ofcChecked;
-  
-  const prjChecked=document.querySelectorAll('.fPrjChk:checked').length;
-  const prjTotal=document.querySelectorAll('.fPrjChk').length;
-  document.getElementById('prjCount').textContent=prjChecked===prjTotal?'All':prjChecked;
-}
-function updateConsolCount(){
-  const sel=document.querySelector('input[name="consolType"]:checked');
-  const count=document.getElementById('consolCount');
-  if(count) count.textContent=sel&&sel.value==='both'?'Indiv + Consol':'Individual';
-}
-
-
-// Close dropdowns when clicking outside
-document.addEventListener('click',function(e){
-  if(!e.target.closest('.filter-dropdown')){
-    document.querySelectorAll('.filter-menu').forEach(m=>m.classList.remove('show'));
-  }
-});
 function applyFilters(){
   destroyCharts();
-  const fMgrs=Array.from(document.querySelectorAll('.fMgrChk:checked')).map(c=>c.value);
-const fOfcs=Array.from(document.querySelectorAll('.fOfcChk:checked')).map(c=>c.value);
-const fPrjs=Array.from(document.querySelectorAll('.fPrjChk:checked')).map(c=>Number(c.value));
-  const consolSel=document.querySelector('input[name="consolType"]:checked');
-  const consol=consolSel?consolSel.value==='both':false;
+  const fm=document.getElementById("fMgr").value;
+  const fo=document.getElementById("fOfc").value;
+  const fp=document.getElementById("fPrj").value;
+  const consol=document.getElementById("chkConsol").checked;
 
   let filtered=reportProjects.slice();
-if(fMgrs.length>0)filtered=filtered.filter(p=>fMgrs.includes(pMgr[p.col]));
-if(fOfcs.length>0)filtered=filtered.filter(p=>fOfcs.includes(pRgn[p.col]));
-if(fPrjs.length>0)filtered=filtered.filter(p=>fPrjs.includes(p.col));
+  if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
+  if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
+  if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
+
   document.getElementById("repInfo").textContent=`${filtered.length} project${filtered.length!==1?"s":""}${consol?" + consolidated":""}`;
 
   const dt=document.getElementById("dtInput").value;
   const co=document.getElementById("repC");co.innerHTML="";
+
+  if(filtered.length===0){
+    co.innerHTML='<div class="rk" style="padding:22px;text-align:center;color:var(--i3)">No reports match the selected filters.</div>';
+    return;
+  }
 
   // Consolidated report first if checked
   if(consol&&filtered.length>1){
     const combined=buildConsolidated(filtered);
     renderOneReport(co,combined,dt,0,true);
   }
+
   // Individual reports
   filtered.forEach((p,i)=>{
     renderOneReport(co,p,dt,i+(consol?1:0),false);
@@ -567,7 +503,7 @@ function buildConsolidated(prjs){
   return{
     col:"consol",code:"ALL",name:"Consolidated Summary ("+prjs.length+" projects)",
     dateRange:"Multiple",revenue:rev,expenditures:exp,netOp,otherRev:oRev,netRev:netR,
-    categories:cats,active:true,_subtitle:subtitle,_codes:names.join(", ")
+    categories:cats,active:true,_subtitle:subtitle,_codes:names.join(", "),_projectCount:prjs.length
   };
 }
 
@@ -580,6 +516,9 @@ function renderOneReport(container,p,dt,idx,isConsol){
   const nl=p.netRev>0?"Surplus":p.netRev<0?"Deficit":"Balanced";
   const pd=Object.entries(p.categories).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const dtL=fDN(dt);
+  const totalRevenue=p.revenue+(p.otherRev||0);
+  const roiPct=p.revenue?((p.netRev/p.revenue)*100).toFixed(1):"0.0";
+  const costEfficiency=totalRevenue?fF(p.expenditures/totalRevenue):"$0.00";
 
   const headerBg=isConsol?"#1e3a5f":"var(--ink)";
   const eyeLabel=isConsol?"CONSOLIDATED FINANCIAL SUMMARY":`PROJECT ${p.code} · FINANCIAL SUMMARY`;
@@ -600,22 +539,22 @@ function renderOneReport(container,p,dt,idx,isConsol){
       </div>
     </div>
     <div class="ks">
-      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF(p.revenue+(p.otherRev||0))}</div><div class="kb">Earned + Restricted</div></div>
+      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF(totalRevenue)}</div><div class="kb">Earned + Restricted</div></div>
       <div class="kc"><div class="kl">Total Spent</div><div class="kv" style="color:var(--rd)">${fF(p.expenditures)}</div><div class="kb">${br.toFixed(0)}% of earned revenue</div></div>
       <div class="kc"><div class="kl">Net Position</div><div class="kv" style="color:${nc}">${fF(p.netRev)}</div><div class="kb">${nl}</div></div>
       <div class="kc"><div class="kl">Personnel Cost</div><div class="kv" style="color:var(--ac)">${pp.toFixed(0)}%</div><div class="kb">of total spending</div></div>
     </div>
           <div class="ks" style="margin-top:16px">
-                  <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:var(--or)">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
-                          <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:var(--bl)">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
-                                  <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${((p.netRev/p.revenue)*100).toFixed(1)}%</div><div class="kb">return on revenue</div></div>
-                                          <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${fF(p.expenditures/(p.revenue+(p.otherRev||0)))}</div><div class="kb">per dollar earned</div></div>
+                  <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:#ea580c">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
+                          <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:#2563eb">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
+                                  <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${roiPct}%</div><div class="kb">return on revenue</div></div>
+                                          <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${costEfficiency}</div><div class="kb">per dollar earned</div></div>
                                                 </div>
 
-                                                      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
-                                                              <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
-                                                                      <div style="font-size:13px;line-height:1.6;color:var(--sc)">
-                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${filtered.length} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+                                                      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--ln)">
+                                                              <div style="font-weight:600;margin-bottom:8px;color:var(--ink);font-size:14px">Quick Analysis</div>
+                                                                      <div style="font-size:13px;line-height:1.6;color:var(--i2)">
+                                                                                ${isConsol?`This consolidated view shows organization-wide financial health across ${p._projectCount||0} active projects with combined revenue of ${fF(totalRevenue)}.`:`This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
                                                                                         </div>
                                                                                               </div>
     <div class="cr">
@@ -649,64 +588,79 @@ function renderOneReport(container,p,dt,idx,isConsol){
   },80);
 }
 
-  //Helper functions for Excel export
-function buildProjectExcelData(p,dt){
-const data=[];
-data.push(['CBDIO Financial Intelligence']);
-data.push(['Project: '+p.code+' - '+p.name]);
-data.push(['Data Through: '+fDN(dt)]);
-data.push(['Grant Period: '+p.dateRange]);
-if(pMgr[p.col])data.push(['Manager: '+pMgr[p.col]]);
-if(pRgn[p.col])data.push(['Office/Region: '+pRgn[p.col]]);
-data.push([]);
-data.push(['Financial Summary','Amount','% of Total']);
-data.push(['Total Revenue',fF(p.revenue+p.otherRev),'']);
-data.push(['Total Spent',fF(p.expenditures),(p.revenue>0?(p.expenditures/p.revenue*100).toFixed(1)+'%':'')]);
-data.push(['Net Position',fF(p.netRev),(p.netRev>=0?'Surplus':'Deficit')]);
-data.push([]);
-data.push(['Expenditure Categories','Amount','% of Total']);
-Object.entries(p.categories).forEach(([n,v])=>{if(v>0)data.push([n,fF(v),(v/p.expenditures*100).toFixed(1)+'%']);});
-return data;
-}
-function buildConsolidatedExcelData(prjs,dt){
-const data=[];
-data.push(['CBDIO Financial Intelligence - Consolidated Report']);
-data.push(['Data Through: '+fDN(dt)]);
-data.push(['Projects Included: '+prjs.length]);
-data.push([]);
-let tRev=0,tExp=0,tNet=0;
-prjs.forEach(p=>{tRev+=p.revenue+p.otherRev;tExp+=p.expenditures;tNet+=p.netRev;});
-data.push(['Consolidated Financial Summary','Amount']);
-data.push(['Total Revenue',fF(tRev)]);
-data.push(['Total Spent',fF(tExp)]);
-data.push(['Net Position',fF(tNet)]);
-data.push([]);
-data.push(['Project Breakdown','Revenue','Expenditures','Net']);
-prjs.forEach(p=>data.push([p.code+' - '+p.name,fF(p.revenue+p.otherRev),fF(p.expenditures),fF(p.netRev)]));
-return data;
-}
+          // ===== EXCEL EXPORT =====
+    function exportToExcel(){
+          const fm=document.getElementById('fMgr').value;
+          const fo=document.getElementById('fOfc').value;
+          const fp=document.getElementById('fPrj').value;
+          const consol=document.getElementById('chkConsol').checked;
+          if(!reportProjects||reportProjects.length===0){alert('Please generate reports first before exporting.');return;}
+      try{
+          let filtered=reportProjects.slice();
+          if(fm)filtered=filtered.filter(p=>pMgr[p.col]===fm);
+                if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
+      if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
 
-  //Export to Excel
-function exportToExcel(){
-const dt=document.getElementById("dtInput").value;
-const wb=XLSX.utils.book_new();
-const indexData=[['CBDIO Financial Intelligence - Project Financial Reporter'],['Data Through: '+fDN(dt)],[],['Index of Reports']];let row=4;
-const filtered=reportProjects.slice();
-const consolSelExp=document.querySelector('input[name="consolType"]:checked');
-const consol=consolSelExp?consolSelExp.value==='both':false;
-if(consol){indexData.push(['Consolidated Summary','Click to view']);row++;}
-filtered.forEach(p=>{indexData.push([p.code+' - '+p.name,'Click to view']);row++;});
-const wsIndex=XLSX.utils.aoa_to_sheet(indexData);
-wsIndex['!cols']=[{wch:50},{wch:20}];
-wsIndex['A1'].s={font:{bold:true,sz:14},alignment:{horizontal:'center'}};wsIndex['!merges']=[{s:{r:0,c:0},e:{r:0,c:1}}];
-wsIndex['A2'].s={font:{bold:true,sz:12},fill:{fgColor:{rgb:'E0F2FE'}}};wsIndex['!merges'].push({s:{r:1,c:0},e:{r:1,c:1}});
-wsIndex['A4'].s={font:{bold:true},fill:{fgColor:{rgb:'DBEAFE'}}};
-XLSX.utils.book_append_sheet(wb,wsIndex,'Index');
-let sheetIdx=1;
-if(consol){const cData=buildConsolidatedExcelData(filtered,dt);const wsC=XLSX.utils.aoa_to_sheet(cData);wsC['!cols']=[{wch:30},{wch:15},{wch:15}];XLSX.utils.book_append_sheet(wb,wsC,'Consolidated');}
-filtered.forEach(p=>{const pData=buildProjectExcelData(p,dt);const wsP=XLSX.utils.aoa_to_sheet(pData);wsP['!cols']=[{wch:30},{wch:15},{wch:15}];XLSX.utils.book_append_sheet(wb,wsP,p.code.substring(0,31));});
-XLSX.writeFile(wb,'CBDIO_Financial_Report_'+dt.replace(/-/g,'')+'.xlsx');
-}
+          const wb=XLSX.utils.book_new();
+
+          // Add consolidated sheet if checked
+          if(consol&&filtered.length>1){
+                  const combined=buildConsolidated(filtered);
+                  const data=buildExcelData(combined);
+                  const ws=XLSX.utils.aoa_to_sheet(data);
+                  XLSX.utils.book_append_sheet(wb,ws,'Consolidated');
+                }
+
+          // Add individual project sheets
+          filtered.forEach(p=>{
+                  const data=buildExcelData(p);
+                  const ws=XLSX.utils.aoa_to_sheet(data);
+                  const sheetName=p.code.substring(0,31); // Excel limit
+                  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+      });
+
+          // Download file
+          const dt=document.getElementById('dtInput').value||'report';
+          XLSX.writeFile(wb,`CBDIO_Financial_Report_${dt}.xlsx`);
+            }catch(err){alert('Export error: '+err.message);console.error('Excel export error:',err);}
+    }
+
+    function buildExcelData(p){
+      const data=[];
+          const br=p.revenue===0?0:(p.expenditures/p.revenue)*100;
+          const pp=p.expenditures===0?0:(p.categories.Personnel/p.expenditures)*100;
+          const totalRevenue=p.revenue+(p.otherRev||0);
+          const roiPct=p.revenue?((p.netRev/p.revenue)*100).toFixed(1):"0.0";
+          const costEfficiency=totalRevenue?p.expenditures/totalRevenue:0;
+
+          // Header
+          data.push([p.name]);
+          data.push([]);
+
+          // KPIs
+          data.push(['KPI','Value','Details']);
+          data.push(['Total Revenue',totalRevenue,'Earned + Restricted']);
+          data.push(['Total Spent',p.expenditures,`${br.toFixed(0)}% of earned revenue`]);
+          data.push(['Net Position',p.netRev,p.netRev>=0?'Surplus':'Deficit']);
+          data.push(['Personnel Cost',`${pp.toFixed(0)}%`,'of total spending']);
+          data.push(['Burn Rate',p.expenditures/12,'monthly average']);
+          data.push(['Budget Utilization',`${br.toFixed(0)}%`,'of revenue spent']);
+          data.push(['ROI',`${roiPct}%`,'return on revenue']);
+          data.push(['Cost Efficiency',costEfficiency,'per dollar earned']);
+          data.push([]);
+
+          // Categories
+          data.push(['Expenditure Categories','Amount','% of Total']);
+          Object.entries(CAT).forEach(([n,d])=>{
+                  const v=p.categories[n]||0;
+                  if(v>0){
+                            const pct=(v/p.expenditures)*100;
+                            data.push([n,v,`${pct.toFixed(1)}%`]);
+                          }
+                });
+
+          return data;
+        }
 </script>
 </body>
 </html>
