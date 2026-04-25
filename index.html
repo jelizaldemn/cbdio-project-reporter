@@ -249,7 +249,6 @@ input,select,textarea{font-family:inherit}
 </head>
 <body>
 
-<!-- ══════ UPLOAD ══════ -->
 <div id="screen-upload" class="screen active">
   <div class="uw">
     <div class="ey">CBDIO Financial Intelligence</div>
@@ -278,7 +277,6 @@ input,select,textarea{font-family:inherit}
   </div>
 </div>
 
-<!-- ══════ SELECT ══════ -->
 <div id="screen-select" class="screen">
   <div class="hbar">
     <div class="left">
@@ -367,7 +365,6 @@ input,select,textarea{font-family:inherit}
   </div>
 </div>
 
-<!-- ══════ REPORT ══════ -->
 <div id="screen-report" class="screen">
   <div class="hbar noprint">
     <div class="left">
@@ -402,9 +399,6 @@ input,select,textarea{font-family:inherit}
 </div>
 
 <script>
-// ═══════════════════════════════════════
-// CATEGORY DEFINITIONS
-// ═══════════════════════════════════════
 const CAT={
   "Personnel":{rows:[27],color:"#2563eb",icon:"👥",desc:"Salaries, benefits, taxes & workers comp"},
   "Communications":{rows:[34],color:"#0891b2",icon:"📡",desc:"Phone, internet & web"},
@@ -419,12 +413,9 @@ const CAT={
 };
 const KR={rev:14,exp:81,netOp:82,oRev:91,netR:93};
 
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
 let projects=[],selIds=new Set(),mgrs=[],pMgr={},pRgn={},charts=[];
+let reportProjects=[];
 
-// Helpers
 function fC(v){
   if(v==null||isNaN(v))return "$0";
   const a=Math.abs(v);
@@ -452,9 +443,6 @@ function goUpload(){show("upload");projects=[]}
 function goSelect(){show("select");destroyCharts()}
 function destroyCharts(){charts.forEach(c=>c.destroy());charts=[]}
 
-// ═══════════════════════════════════════
-// FILE PARSING
-// ═══════════════════════════════════════
 function handleFile(e){
   const file=e.target.files?.[0];
   if(!file)return;
@@ -519,9 +507,6 @@ function handleFile(e){
   reader.readAsArrayBuffer(file);
 }
 
-// ═══════════════════════════════════════
-// MANAGERS
-// ═══════════════════════════════════════
 function importMgrs(){
   const names=document.getElementById("mgrPaste").value.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
   mgrs=[...new Set([...mgrs,...names])].sort();
@@ -549,9 +534,6 @@ function renderChips(){
   ).join("");
 }
 
-// ═══════════════════════════════════════
-// MAPPING TABLE
-// ═══════════════════════════════════════
 function renderMap(){
   const tb=document.getElementById("mapTbody");
   tb.innerHTML="";
@@ -566,9 +548,6 @@ function renderMap(){
   });
 }
 
-// ═══════════════════════════════════════
-// SAVE / LOAD MAPPING AS .JSON FILE
-// ═══════════════════════════════════════
 function saveMappingFile(){
   const payload={version:1,savedAt:new Date().toISOString(),managers:mgrs,projectManager:pMgr,projectRegion:pRgn};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -614,9 +593,6 @@ function loadMappingFile(e){
   e.target.value="";
 }
 
-// ═══════════════════════════════════════
-// SELECT SCREEN
-// ═══════════════════════════════════════
 function renderSel(){
   const act=projects.filter(p=>p.active),ina=projects.filter(p=>!p.active);
   document.getElementById("selInfo").textContent=`${projects.length} projects · ${act.length} active`;
@@ -686,11 +662,6 @@ function updBtn(){
   b.textContent=`Generate ${n} Report${n!==1?"s":""} →`;
 }
 
-// ═══════════════════════════════════════
-// REPORT GENERATION
-// ═══════════════════════════════════════
-let reportProjects=[];
-
 function doGenerate(){
   const dt=document.getElementById("dtInput").value;
   if(!dt){
@@ -732,18 +703,26 @@ function applyFilters(){
   if(fo)filtered=filtered.filter(p=>pRgn[p.col]===fo);
   if(fp)filtered=filtered.filter(p=>String(p.col)===fp);
 
-  document.getElementById("repInfo").textContent=`${filtered.length} project${filtered.length!==1?"s":""}${consol?" + consolidated":""}`;
+  document.getElementById("repInfo").textContent=`${filtered.length} project${filtered.length!==1?"s":""}${consol&&filtered.length>1?" + consolidated":""}`;
   const dt=document.getElementById("dtInput").value;
   const co=document.getElementById("repC");
   co.innerHTML="";
 
   if(consol&&filtered.length>1){
-    const combined=buildConsolidated(filtered);
-    renderOneReport(co,combined,dt,0,true,filtered.length);
+    try{
+      const combined=buildConsolidated(filtered);
+      renderOneReport(co,combined,dt,0,true,filtered.length);
+    }catch(err){
+      console.error("Error building consolidated report:",err);
+    }
   }
 
   filtered.forEach((p,i)=>{
-    renderOneReport(co,p,dt,i+(consol?1:0),false,filtered.length);
+    try{
+      renderOneReport(co,p,dt,i+(consol&&filtered.length>1?1:0),false,filtered.length);
+    }catch(err){
+      console.error("Error rendering report for project",p.code,err);
+    }
   });
 }
 
@@ -754,12 +733,12 @@ function buildConsolidated(prjs){
   const names=[];
 
   prjs.forEach(p=>{
-    rev+=p.revenue;
-    exp+=p.expenditures;
-    netOp+=p.netOp;
-    oRev+=p.otherRev;
-    netR+=p.netRev;
-    for(const n of Object.keys(CAT))cats[n]+=(p.categories[n]||0);
+    rev+=p.revenue||0;
+    exp+=p.expenditures||0;
+    netOp+=p.netOp||0;
+    oRev+=p.otherRev||0;
+    netR+=p.netRev||0;
+    for(const n of Object.keys(CAT))cats[n]+=(p.categories&&p.categories[n]||0);
     names.push(p.code);
   });
 
@@ -775,7 +754,7 @@ function buildConsolidated(prjs){
     dateRange:"Multiple",
     revenue:rev,
     expenditures:exp,
-    netOp,
+    netOp:netOp,
     otherRev:oRev,
     netRev:netR,
     categories:cats,
@@ -789,10 +768,10 @@ function renderOneReport(container,p,dt,idx,isConsol,totalFiltered){
   const m=isConsol?null:pMgr[p.col];
   const r=isConsol?null:pRgn[p.col];
   const br=p.revenue>0?(p.expenditures/p.revenue*100):0;
-  const pp=p.expenditures>0?(p.categories["Personnel"]/p.expenditures*100):0;
+  const pp=p.expenditures>0?((p.categories["Personnel"]||0)/p.expenditures*100):0;
   const nc=p.netRev>=0?"var(--gn)":"var(--r2)";
   const nl=p.netRev>0?"Surplus":p.netRev<0?"Deficit":"Balanced";
-  const pd=Object.entries(p.categories).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const pd=Object.entries(p.categories||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const dtL=fDN(dt);
   const headerBg=isConsol?"#1e3a5f":"var(--ink)";
   const eyeLabel=isConsol?"CONSOLIDATED FINANCIAL SUMMARY":`PROJECT ${p.code} · FINANCIAL SUMMARY`;
@@ -815,25 +794,25 @@ function renderOneReport(container,p,dt,idx,isConsol,totalFiltered){
     </div>
 
     <div class="ks">
-      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF(p.revenue+(p.otherRev||0))}</div><div class="kb">Earned + Restricted</div></div>
-      <div class="kc"><div class="kl">Total Spent</div><div class="kv" style="color:var(--rd)">${fF(p.expenditures)}</div><div class="kb">${br.toFixed(0)}% of earned revenue</div></div>
-      <div class="kc"><div class="kl">Net Position</div><div class="kv" style="color:${nc}">${fF(p.netRev)}</div><div class="kb">${nl}</div></div>
+      <div class="kc"><div class="kl">Total Revenue</div><div class="kv" style="color:var(--gn)">${fF((p.revenue||0)+(p.otherRev||0))}</div><div class="kb">Earned + Restricted</div></div>
+      <div class="kc"><div class="kl">Total Spent</div><div class="kv" style="color:var(--rd)">${fF(p.expenditures||0)}</div><div class="kb">${br.toFixed(0)}% of earned revenue</div></div>
+      <div class="kc"><div class="kl">Net Position</div><div class="kv" style="color:${nc}">${fF(p.netRev||0)}</div><div class="kb">${nl}</div></div>
       <div class="kc"><div class="kl">Personnel Cost</div><div class="kv" style="color:var(--ac)">${pp.toFixed(0)}%</div><div class="kb">of total spending</div></div>
     </div>
 
     <div class="ks" style="margin-top:16px">
-      <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:var(--or)">${fF(p.expenditures/12)}/mo</div><div class="kb">monthly average</div></div>
+      <div class="kc"><div class="kl">Burn Rate</div><div class="kv" style="color:var(--or)">${fF((p.expenditures||0)/12)}/mo</div><div class="kb">monthly average</div></div>
       <div class="kc"><div class="kl">Budget Utilization</div><div class="kv" style="color:var(--bl)">${br.toFixed(0)}%</div><div class="kb">of revenue spent</div></div>
-      <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${p.netRev>=0?'var(--gn)':'var(--rd)'}">${(p.revenue?((p.netRev/p.revenue)*100):0).toFixed(1)}%</div><div class="kb">return on revenue</div></div>
-      <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${fF((p.revenue+(p.otherRev||0))?p.expenditures/(p.revenue+(p.otherRev||0)):0)}</div><div class="kb">per dollar earned</div></div>
+      <div class="kc"><div class="kl">ROI</div><div class="kv" style="color:${(p.netRev||0)>=0?'var(--gn)':'var(--rd)'}">${((p.revenue?((p.netRev/p.revenue)*100):0)||0).toFixed(1)}%</div><div class="kb">return on revenue</div></div>
+      <div class="kc"><div class="kl">Cost Efficiency</div><div class="kv" style="color:var(--ac)">${fF(((p.revenue||0)+(p.otherRev||0))?(p.expenditures||0)/((p.revenue||0)+(p.otherRev||0)):0)}</div><div class="kb">per dollar earned</div></div>
     </div>
 
     <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--br)">
       <div style="font-weight:600;margin-bottom:8px;color:var(--fg);font-size:14px">Quick Analysis</div>
       <div style="font-size:13px;line-height:1.6;color:var(--sc)">
         ${isConsol
-          ? `This consolidated view shows organization-wide financial health across ${totalFiltered} active projects with combined revenue of ${fF(p.revenue+(p.otherRev||0))}.`
-          : `This project is ${(p.netRev>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev))} ${(p.netRev>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF(p.expenditures/12)} per month.`}
+          ? `This consolidated view shows organization-wide financial health across ${totalFiltered} active projects with combined revenue of ${fF((p.revenue||0)+(p.otherRev||0))}.`
+          : `This project is ${((p.netRev||0)>=0)?'operating with a surplus':'running a deficit'} with ${fF(Math.abs(p.netRev||0))} ${((p.netRev||0)>=0)?'in net position':'in net loss'}. Personnel represents ${pp.toFixed(0)}% of total spending, with an average burn rate of ${fF((p.expenditures||0)/12)} per month.`}
       </div>
     </div>
 
@@ -871,21 +850,21 @@ function renderOneReport(container,p,dt,idx,isConsol,totalFiltered){
           cutout:"55%",
           plugins:{
             legend:{display:false},
-            tooltip:{callbacks:{label:c=>`${c.label}: ${fF(c.raw)} (${pc(c.raw,p.expenditures)}%)`}}
+            tooltip:{callbacks:{label:c=>`${c.label}: ${fF(c.raw)} (${pc(c.raw,p.expenditures||0)}%)`}}
           }
         }
       }));
 
       const lg=document.getElementById("leg"+idx);
       if(lg)lg.innerHTML=pd.map(([n,v])=>
-        `<div class="lr"><div class="ld" style="background:${CAT[n].color}"></div><span class="ln">${n}</span><span class="lp">${pc(v,p.expenditures)}%</span></div>`
+        `<div class="lr"><div class="ld" style="background:${CAT[n].color}"></div><span class="ln">${n}</span><span class="lp">${pc(v,p.expenditures||0)}%</span></div>`
       ).join("");
     }
 
     const bx=document.getElementById("bar"+idx);
     if(bx){
-      const bl=["Revenue","Expenditures"],bv=[p.revenue,p.expenditures],bc=["#16a34a","#ef4444"];
-      if(p.otherRev>0){bl.push("Restricted Grants");bv.push(p.otherRev);bc.push("#2563eb")}
+      const bl=["Revenue","Expenditures"],bv=[p.revenue||0,p.expenditures||0],bc=["#16a34a","#ef4444"];
+      if((p.otherRev||0)>0){bl.push("Restricted Grants");bv.push(p.otherRev||0);bc.push("#2563eb")}
       charts.push(new Chart(bx,{
         type:"bar",
         data:{labels:bl,datasets:[{data:bv,backgroundColor:bc,borderRadius:5,barThickness:18}]},
@@ -903,14 +882,13 @@ function renderOneReport(container,p,dt,idx,isConsol,totalFiltered){
     }
 
     const cge=document.getElementById("cg"+idx);
-    if(cge)cge.innerHTML=Object.entries(CAT).filter(([n])=>(p.categories[n]||0)>0).map(([n,d])=>{
-      const v=p.categories[n],cpct=pc(v,p.expenditures);
+    if(cge)cge.innerHTML=Object.entries(CAT).filter(([n])=>((p.categories||{})[n]||0)>0).map(([n,d])=>{
+      const v=(p.categories||{})[n]||0,cpct=pc(v,p.expenditures||0);
       return `<div class="cx"><span class="ci">${d.icon}</span><div class="cinfo"><div class="cn">${n}</div><div class="cdsc">${d.desc}</div></div><div class="cvals"><div class="ca">${fF(v)}</div><div class="cpct">${cpct}%</div></div><div class="cbar"><div class="cbf" style="width:${Math.min(cpct,100)}%;background:${d.color}"></div></div></div>`;
     }).join("");
   },80);
 }
 
-// ===== EXCEL EXPORT =====
 function exportToExcel(){
   const fm=document.getElementById('fMgr').value;
   const fo=document.getElementById('fOfc').value;
@@ -954,28 +932,28 @@ function exportToExcel(){
 
 function buildExcelData(p){
   const data=[];
-  const br=p.revenue===0?0:(p.expenditures/p.revenue)*100;
-  const pp=p.expenditures===0?0:(p.categories.Personnel/p.expenditures)*100;
+  const br=(p.revenue||0)===0?0:((p.expenditures||0)/(p.revenue||0))*100;
+  const pp=(p.expenditures||0)===0?0:(((p.categories||{}).Personnel||0)/(p.expenditures||0))*100;
 
   data.push([p.name]);
   data.push([]);
 
   data.push(['KPI','Value','Details']);
-  data.push(['Total Revenue',p.revenue+(p.otherRev||0),'Earned + Restricted']);
-  data.push(['Total Spent',p.expenditures,`${br.toFixed(0)}% of earned revenue`]);
-  data.push(['Net Position',p.netRev,p.netRev>=0?'Surplus':'Deficit']);
+  data.push(['Total Revenue',(p.revenue||0)+(p.otherRev||0),'Earned + Restricted']);
+  data.push(['Total Spent',p.expenditures||0,`${br.toFixed(0)}% of earned revenue`]);
+  data.push(['Net Position',p.netRev||0,(p.netRev||0)>=0?'Surplus':'Deficit']);
   data.push(['Personnel Cost',`${pp.toFixed(0)}%`,'of total spending']);
-  data.push(['Burn Rate',p.expenditures/12,'monthly average']);
+  data.push(['Burn Rate',(p.expenditures||0)/12,'monthly average']);
   data.push(['Budget Utilization',`${br.toFixed(0)}%`,'of revenue spent']);
-  data.push(['ROI',`${(p.revenue?((p.netRev/p.revenue)*100):0).toFixed(1)}%`,'return on revenue']);
-  data.push(['Cost Efficiency',(p.revenue+(p.otherRev||0))?p.expenditures/(p.revenue+(p.otherRev||0)):0,'per dollar earned']);
+  data.push(['ROI',`${(((p.revenue||0)?(((p.netRev||0)/(p.revenue||0))*100):0)||0).toFixed(1)}%`,'return on revenue']);
+  data.push(['Cost Efficiency',((p.revenue||0)+(p.otherRev||0))?(p.expenditures||0)/((p.revenue||0)+(p.otherRev||0)):0,'per dollar earned']);
   data.push([]);
 
   data.push(['Expenditure Categories','Amount','% of Total']);
   Object.entries(CAT).forEach(([n,d])=>{
-    const v=p.categories[n]||0;
+    const v=((p.categories||{})[n]||0);
     if(v>0){
-      const pct=p.expenditures?(v/p.expenditures)*100:0;
+      const pct=(p.expenditures||0)?(v/(p.expenditures||0))*100:0;
       data.push([n,v,`${pct.toFixed(1)}%`]);
     }
   });
@@ -983,7 +961,6 @@ function buildExcelData(p){
   return data;
 }
 
-// Event listener for dropdown selection
 document.addEventListener("DOMContentLoaded", function(){
   const pSelect=document.getElementById("pSelect");
   if(pSelect){
